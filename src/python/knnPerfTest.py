@@ -232,7 +232,7 @@ def run_knn_benchmark(checkout, values):
   skip_headers = {'selectivity', 'filterType'}
 
   if '-forceMerge' not in this_cmd:
-      skip_headers.add('force merge s')
+      skip_headers.add('force_merge(s)')
   if '-overSample' not in this_cmd:
       skip_headers.add('overSample')
   if '-indexType' in this_cmd and 'flat' in this_cmd:
@@ -243,7 +243,7 @@ def run_knn_benchmark(checkout, values):
 
 
 def print_fixed_width(all_results, columns_to_skip):
-    header = "recall\tlatency(ms)\tnDoc\ttopK\tfanout\tmaxConn\tbeamWidth\tquantized\tvisited\tindex(s)\tindex_docs/s\tforce_merge(s)\tnum_segments\tindex_size(MB)\tselectivity\tfilterType\toverSample\tvec_disk(MB)\tvec_RAM(MB)\tindexType"
+  header = "recall\tlatency(ms)\tnDoc\ttopK\tfanout\tmaxConn\tbeamWidth\tquantized\tvisited\tindex(s)\tindex_docs/s\tforce_merge(s)\tnum_segments\tindex_size(MB)\tselectivity\tfilterType\toverSample\tvec_disk(MB)\tvec_RAM(MB)\tindexType"
 
   # crazy logic to make everything fixed width so rendering in fixed width font "aligns":
   headers = header.split("\t")
