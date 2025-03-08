@@ -208,7 +208,8 @@ public class KnnGraphTester {
     if (noisy) {
       System.out.println("path=" + path + " dim=" + dim + " vectorEncoding.byteSize=" + vectorEncoding.byteSize);
     }
-    if (in.size() % (dim * vectorEncoding.byteSize) != 0) {
+    final var dimSize = path.toString().endsWith(".fvecs") ? 4 : 0;
+    if (in.size() % (dim * vectorEncoding.byteSize + dimSize) != 0) {
       throw new IllegalArgumentException("vectors file \"" + path + "\" does not contain a whole number of vectors?  size=" + in.size());
     }
     return in;
@@ -833,7 +834,7 @@ public class KnnGraphTester {
     try (FileChannel input = getVectorFileChannel(queryPath, dim, vectorEncoding, !quiet)) {
       long queryPathSizeInBytes = input.size();
       log((int) (queryPathSizeInBytes / (dim * vectorEncoding.byteSize)) + " query vectors in queryPath \"" + queryPath + "\"\n");
-      VectorReader targetReader = VectorReader.create(input, dim, vectorEncoding, queryStartIndex);
+      VectorReader targetReader = VectorReader.create(input, dim, vectorEncoding, queryStartIndex, queryPath.toString().endsWith(".fvecs"));
       VectorReaderByte targetReaderByte = null;
       if (targetReader instanceof VectorReaderByte b) {
         targetReaderByte = b;
@@ -1086,7 +1087,7 @@ public class KnnGraphTester {
     try (Directory dir = FSDirectory.open(indexPath);
          DirectoryReader reader = DirectoryReader.open(dir)) {
       try (FileChannel qIn = getVectorFileChannel(queryPath, dim, vectorEncoding, !quiet)) {
-        VectorReaderByte queryReader = (VectorReaderByte) VectorReader.create(qIn, dim, VectorEncoding.BYTE, queryStartIndex);
+        VectorReaderByte queryReader = (VectorReaderByte) VectorReader.create(qIn, dim, VectorEncoding.BYTE, queryStartIndex, false);
         for (int i = 0; i < numQueryVectors; i++) {
           byte[] query = queryReader.nextBytes().clone();
           tasks.add(new ComputeNNByteTask(i, query, result, reader));
@@ -1147,7 +1148,7 @@ public class KnnGraphTester {
       }
       List<Callable<Void>> tasks = new ArrayList<>();
       try (FileChannel qIn = getVectorFileChannel(queryPath, dim, vectorEncoding, !quiet)) {
-        VectorReader queryReader = (VectorReader) VectorReader.create(qIn, dim, VectorEncoding.FLOAT32, queryStartIndex);
+        VectorReader queryReader = VectorReader.create(qIn, dim, VectorEncoding.FLOAT32, queryStartIndex, queryPath.toString().endsWith(".fvecs"));
         for (int i = 0; i < numQueryVectors; i++) {
           float[] query = queryReader.next().clone();
           if (parentJoin) {

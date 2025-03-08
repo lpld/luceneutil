@@ -130,13 +130,14 @@ public class KnnIndexer {
     try (FSDirectory dir = FSDirectory.open(indexPath);
          IndexWriter iw = new IndexWriter(dir, iwc);
          FileChannel in = FileChannel.open(docsPath)) {
+      final var dimSize = docsPath.toString().endsWith(".fvecs") ? 4 : 0;
       long docsPathSizeInBytes = in.size();
-      if (docsPathSizeInBytes % (dim * vectorEncoding.byteSize) != 0) {
+      if (docsPathSizeInBytes % (dim * vectorEncoding.byteSize + dimSize) != 0) {
         throw new IllegalArgumentException("docsPath \"" + docsPath + "\" does not contain a whole number of vectors?  size=" + docsPathSizeInBytes);
       }
       System.out.println((int) (docsPathSizeInBytes / (dim * vectorEncoding.byteSize)) + " doc vectors in docsPath \"" + docsPath + "\"");
         
-      VectorReader vectorReader = VectorReader.create(in, dim, vectorEncoding, docsStartIndex);
+      VectorReader vectorReader = VectorReader.create(in, dim, vectorEncoding, docsStartIndex, docsPath.toString().endsWith(".fvecs"));
       log("parentJoin=%s", parentJoin);
       if (parentJoin == false) {
         ExecutorService exec = Executors.newFixedThreadPool(numIndexThreads);

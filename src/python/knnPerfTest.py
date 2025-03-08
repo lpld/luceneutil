@@ -119,12 +119,17 @@ def run_knn_benchmark(checkout, values):
   # query_vectors = '/d/electronics_query_vectors.bin'
 
   # Cohere dataset
-  dim = 768
-  doc_vectors = f"{constants.BASE_DIR}/data/cohere-wikipedia-docs-{dim}d.vec"
-  query_vectors = f"{constants.BASE_DIR}/data/cohere-wikipedia-queries-{dim}d.vec"
-  #doc_vectors = f"/lucenedata/enwiki/{'cohere-wikipedia'}-docs-{dim}d.vec"
-  #query_vectors = f"/lucenedata/enwiki/{'cohere-wikipedia'}-queries-{dim}d.vec"
+  # dim = 768
+  # doc_vectors = f"{constants.BASE_DIR}/data/cohere-wikipedia-docs-{dim}d.vec"
+  # query_vectors = f"{constants.BASE_DIR}/data/cohere-wikipedia-queries-{dim}d.vec"
+  # doc_vectors = f"/lucenedata/enwiki/{'cohere-wikipedia'}-docs-{dim}d.vec"
+  # query_vectors = f"/lucenedata/enwiki/{'cohere-wikipedia'}-queries-{dim}d.vec"
   # parentJoin_meta_file = f"{constants.BASE_DIR}/data/{'cohere-wikipedia'}-metadata.csv"
+
+  # GIST1M
+  dim = 960
+  doc_vectors = f"{constants.BASE_DIR}/data/gist1m/gist_base.fvecs"
+  query_vectors = f"{constants.BASE_DIR}/data/gist1m/gist_query.fvecs"
 
   jfr_output = f"{constants.LOGS_DIR}/knn-perf-test.jfr"
 

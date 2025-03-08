@@ -27,22 +27,26 @@ import java.nio.channels.FileChannel;
 public abstract class VectorReader {
   final float[] target;
   final ByteBuffer bytes;
+  final ByteBuffer dimBuffer;
   final FileChannel input;
+  final boolean withDim;
 
   // seek to this vector on init/reset:
   final int vectorStartIndex;
 
-  static VectorReader create(FileChannel input, int dim, VectorEncoding vectorEncoding, int vectorStartIndex) throws IOException {
+  static VectorReader create(FileChannel input, int dim, VectorEncoding vectorEncoding, int vectorStartIndex, boolean withDim) throws IOException {
     int bufferSize = dim * vectorEncoding.byteSize;
     return switch (vectorEncoding) {
-      case BYTE -> new VectorReaderByte(input, dim, bufferSize, vectorStartIndex);
-      case FLOAT32 -> new VectorReaderFloat32(input, dim, bufferSize, vectorStartIndex);
+      case BYTE -> new VectorReaderByte(input, dim, bufferSize, vectorStartIndex, withDim);
+      case FLOAT32 -> new VectorReaderFloat32(input, dim, bufferSize, vectorStartIndex, withDim);
     };
   }
 
-  VectorReader(FileChannel input, int dim, int bufferSize, int vectorStartIndex) throws IOException {
+  VectorReader(FileChannel input, int dim, int bufferSize, int vectorStartIndex, boolean withDim) throws IOException {
     this.bytes = ByteBuffer.wrap(new byte[bufferSize]).order(ByteOrder.LITTLE_ENDIAN);
+    this.dimBuffer = ByteBuffer.wrap(new byte[withDim ? 4 : 0]).order(ByteOrder.LITTLE_ENDIAN);
     this.input = input;
+    this.withDim = withDim;
     this.vectorStartIndex = vectorStartIndex;
     target = new float[dim];
     reset();
@@ -54,17 +58,29 @@ public abstract class VectorReader {
   }
 
   protected final void readNext() throws IOException {
-    int bytesRead = this.input.read(bytes);
-    if (bytesRead < bytes.capacity()) {
-      // wrap around back to the start of the file if we hit the end:
-      System.out.println("WARNING: VectorReader hit EOF when reading " + this.input + "; now wrapping around to start of file again");
-      this.input.position(0);
-      bytesRead = this.input.read(bytes);
-      if (bytesRead < bytes.capacity()) {
-        throw new IllegalStateException("vector file " + input + " doesn't even have enough bytes for a single vector?  got bytesRead=" + bytesRead);
+    boolean read = false;
+    int attemptNo = 0;
+    while (!read) {
+      attemptNo++;
+
+      int dimBytesRead = 0;
+      if (withDim) {
+        dimBytesRead = this.input.read(dimBuffer);
+        dimBuffer.position(0);
       }
+
+      int bytesRead = this.input.read(bytes);
+      bytes.position(0);
+      if (bytesRead < bytes.capacity() || dimBytesRead < dimBuffer.capacity()) {
+        if (attemptNo > 1) {
+          throw new IllegalStateException("vector file " + input + " doesn't even have enough bytes for a single vector?  got bytesRead=" + bytesRead);
+        }
+        System.out.println("WARNING: VectorReader hit EOF when reading " + this.input + "; now wrapping around to start of file again");
+        this.input.position(0);
+        continue;
+      }
+      read = true;
     }
-    bytes.position(0);
   }
 
   abstract float[] next() throws IOException;
